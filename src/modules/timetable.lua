@@ -11,6 +11,19 @@ function Timetable.init (key)
 end
 
 
+function Timetable.xpath (self, ...)
+    local function join (arr)
+        return table.concat(arr, ':')
+    end
+
+    local segments = { self.key }
+    if #arg > 0 then
+        table.insert(segments, join(arg))
+    end
+    return join(segments)
+end
+
+
 function Timetable.uid (self)
     local luid_key = self.key .. ':luid'
     local id = redis.call('incr', luid_key)
@@ -19,25 +32,19 @@ end
 
 function Timetable.index (self, timestamp)
     local id = self:uid()
-    local timetable_key = self.key .. ':timetable'
-    redis.call('zadd', timetable_key, timestamp, id)
+    redis.call('zadd', self:xpath('timetable'), timestamp, id)
     return id
 end
 
 function Timetable.add (self, timestamp, argv)
     local id = self:index(timestamp)
 
-    local timeline_key = self.key .. ':' .. id .. ':timeline'
-    local distance_key = self.key .. ':' .. id .. ':distance'
-    local geoindex_key = self.key .. ':' .. id .. ':geoindex'
-
-    local threshold = 0
-    local magnitude = 0
-
-
     local geoindex = {}
     local timeline = {}
     local distance = {}
+
+    local threshold = 0
+    local magnitude = 0
 
     local step_id = 0
 
@@ -60,10 +67,9 @@ function Timetable.add (self, timestamp, argv)
         table.insert(geoindex, step_id)
     end
 
-    redis.call('zadd', timeline_key, unpack(timeline))
-    redis.call('zadd', distance_key, unpack(distance))
-
-    redis.call('geoadd', geoindex_key, unpack(geoindex))
+    redis.call('zadd', self:xpath(id, 'timeline'), unpack(timeline))
+    redis.call('zadd', self:xpath(id, 'distance'), unpack(distance))
+    redis.call('geoadd', self:xpath(id, 'geoindex'), unpack(geoindex))
 
     return id
 end
