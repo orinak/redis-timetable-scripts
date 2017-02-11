@@ -60,9 +60,9 @@ test('run', async t => {
     ];
 
     const [
-        lng1, lat1,
-        lng2, lat2,
-        lng3, lat3
+        [lng1, lat1],
+        [lng2, lat2],
+        [lng3, lat3]
     ] = steps;
 
     const [t1, t2] = durations;
@@ -88,6 +88,33 @@ test('run', async t => {
     const $routes = await redis.zrange(routes_key, 0, -1, 'withscores');
     t.deepEqual($routes, ['1', String(timestamp)], 'should index');
 
-    // const steps_redis = await redis.zrange(agent_id + ':timetable', 0, -1);
-    // t.deepEqual(steps_redis, [0, ])
+    const $timeline = await redis.zrange(agent_id + ':1:timeline', 0, -1, 'withscores');
+    t.deepEqual($timeline, [
+        '1', '0',
+        '2', '1800',
+        '3', '2400'
+    ]);
+
+    const $distance = await redis.zrange(agent_id + ':1:distance', 0, -1, 'withscores');
+    t.deepEqual($distance, [
+        '1', '0',
+        '2', '6000',
+        '3', '12000'
+    ]);
+
+    const $geoindex = await redis
+        .geopos(agent_id + ':1:geoindex', 1, 2, 3)
+        .then(steps => {
+            steps = steps.map(xy => xy.map(round))
+            return Promise.resolve(steps);
+        });
+
+    t.deepEqual($geoindex, steps);
+
+    function round (number, precision=5) {
+        var factor = Math.pow(10, precision);
+        var tempNumber = number * factor;
+        var roundedTempNumber = Math.round(tempNumber);
+        return roundedTempNumber / factor;
+    };
 });

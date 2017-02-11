@@ -8,4 +8,4 @@ local timetable = Timetable.init(KEYS[1])
 
 local timestamp = shift(ARGV)
 
-return timetable:add(timestamp)
+return timetable:add(timestamp, ARGV)

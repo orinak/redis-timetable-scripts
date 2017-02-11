@@ -24,6 +24,46 @@ function Timetable.index (self, timestamp)
     return id
 end
 
-function Timetable.add (self, timestamp)
-    return self:index(timestamp)
+function Timetable.add (self, timestamp, argv)
+    local id = self:index(timestamp)
+
+    local timeline_key = self.key .. ':' .. id .. ':timeline'
+    local distance_key = self.key .. ':' .. id .. ':distance'
+    local geoindex_key = self.key .. ':' .. id .. ':geoindex'
+
+    local threshold = 0
+    local magnitude = 0
+
+
+    local geoindex = {}
+    local timeline = {}
+    local distance = {}
+
+    local step_id = 0
+
+    for i = 1, #argv, 4 do
+        step_id = step_id + 1
+
+        if i > 1 then
+            threshold = threshold + argv[i-2]
+            magnitude = magnitude + argv[i-1]
+        end
+
+        table.insert(timeline, threshold)
+        table.insert(timeline, step_id)
+
+        table.insert(distance, magnitude)
+        table.insert(distance, step_id)
+
+        table.insert(geoindex, argv[i])
+        table.insert(geoindex, argv[i+1])
+        table.insert(geoindex, step_id)
+    end
+
+    redis.call('zadd', timeline_key, unpack(timeline))
+    redis.call('zadd', distance_key, unpack(distance))
+
+    redis.call('geoadd', geoindex_key, unpack(geoindex))
+
+    return id
 end
