@@ -13,17 +13,19 @@ const PIVOT = 0;
 
 const clock = (hh=0, mm=0) => (hh + mm * 60) * 60;
 
+
 test('init', t => {
     const name = 'ttadd';
     const dist = model[name];
 
     t.not(dist, void 0, 'should exist');
-    t.notThrows(redis.defineCommand(name, dist), 'should evaluate');
+    t.notThrows(() => redis.defineCommand(name, dist), 'should evaluate');
+    t.is(typeof redis.ttadd, 'function');
 });
 
 test('run', async t => {
     // key
-    const agent_id = 'A';
+    const agent_id = '/test/A';
 
     // start
     const timestamp = clock(18, 0);
@@ -66,8 +68,9 @@ test('run', async t => {
     t.is(route_id, 1);
 
     // check redis
-    const route_id_redis = await redis.get(agent_id + ':uid');
-    t.is(route_id_redis, 1)
+    const route_id_redis = await redis.get(agent_id + ':luid');
+    t.is(route_id_redis, '1')
 
-    const steps_redis = await redis.zrange(agent_id + ':timetable', 0, -1);
+    // const steps_redis = await redis.zrange(agent_id + ':timetable', 0, -1);
+    // t.deepEqual(steps_redis, [0, ])
 });
