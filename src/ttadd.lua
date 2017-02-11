@@ -1,4 +1,5 @@
--- last unique id
-local luid_key = KEYS[1] .. ':luid'
+require "modules/timetable"
 
-return redis.call('incr', luid_key);
+local timetable = Timetable.init(KEYS[1])
+
+return timetable:uid()
