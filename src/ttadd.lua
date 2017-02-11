@@ -1,5 +1,11 @@
 require "modules/timetable"
 
+local function shift (arr)
+    return table.remove(arr, 1)
+end
+
 local timetable = Timetable.init(KEYS[1])
 
-return timetable:uid()
+local timestamp = shift(ARGV)
+
+return timetable:add(timestamp)

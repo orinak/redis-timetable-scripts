@@ -17,3 +17,13 @@ function Timetable.uid (self)
     return tonumber(id);
 end
 
+function Timetable.index (self, timestamp)
+    local id = self:uid()
+    local timetable_key = self.key .. ':timetable'
+    redis.call('zadd', timetable_key, timestamp, id)
+    return id
+end
+
+function Timetable.add (self, timestamp)
+    return self:index(timestamp)
+end

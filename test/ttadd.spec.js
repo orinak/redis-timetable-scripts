@@ -81,8 +81,12 @@ test('run', async t => {
     t.is(route_id, 1);
 
     // check redis
-    const route_id_redis = await redis.get(agent_id + ':luid');
-    t.is(route_id_redis, '1')
+    const $route_id = await redis.get(agent_id + ':luid');
+    t.is($route_id, '1')
+
+    const routes_key = agent_id + ':timetable'
+    const $routes = await redis.zrange(routes_key, 0, -1, 'withscores');
+    t.deepEqual($routes, ['1', String(timestamp)], 'should index');
 
     // const steps_redis = await redis.zrange(agent_id + ':timetable', 0, -1);
     // t.deepEqual(steps_redis, [0, ])
