@@ -1,0 +1,6 @@
+data/map
+
+node_modules
+
+*.log
+*.errlog

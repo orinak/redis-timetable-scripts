@@ -1,0 +1,19 @@
+{
+  "name": "agent-routing-timetable",
+  "private": true,
+  "version": "0.0.0",
+  "description": "redis backed route model",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "author": "Mushegh Antaranyan",
+  "license": "MIT",
+  "devDependencies": {
+    "ava": "^0.18.1",
+    "ioredis": "^2.5.0"
+  }
+}
