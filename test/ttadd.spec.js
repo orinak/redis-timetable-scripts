@@ -14,6 +14,19 @@ const PIVOT = 0;
 const clock = (hh=0, mm=0) => (hh + mm * 60) * 60;
 
 
+test.after.always(async t => {
+    function cleanup (keys) {
+        const pipeline = redis.pipeline();
+        keys.forEach(key => pipeline.del(key));
+        return pipeline.exec();
+    }
+
+    return redis
+        .keys('/test/*')
+        .then(cleanup);    
+});
+
+
 test('init', t => {
     const name = 'ttadd';
     const dist = model[name];
