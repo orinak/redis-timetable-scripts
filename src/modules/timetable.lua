@@ -49,8 +49,6 @@ function Timetable.add (self, timestamp, argv)
     local step_id = 0
 
     for i = 1, #argv, 4 do
-        step_id = step_id + 1
-
         if i > 1 then
             threshold = threshold + argv[i-2]
             magnitude = magnitude + argv[i-1]
@@ -65,6 +63,8 @@ function Timetable.add (self, timestamp, argv)
         table.insert(geoindex, argv[i])
         table.insert(geoindex, argv[i+1])
         table.insert(geoindex, step_id)
+
+        step_id = step_id + 1
     end
 
     redis.call('zadd', self:xpath(id, 'timeline'), unpack(timeline))
