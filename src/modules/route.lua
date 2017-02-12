@@ -57,10 +57,10 @@ function Route.create (timetable, time, data)
 
   local geoindex, duration, distance = destruct(data);
 
-  geoadd(self:keyfor 'geoindex', geoindex)
+  geoadd(self:keyfor 'geoindex', unpack(geoindex))
 
-  zadd(self:keyfor 'duration', duration)
-  zadd(self:keyfor 'distance', distance)
+  zadd(self:keyfor 'duration', unpack(duration))
+  zadd(self:keyfor 'distance', unpack(distance))
 
   return self
 end

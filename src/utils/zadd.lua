@@ -1,3 +1,3 @@
-return function (key, data)
-  return redis.call('zadd', key, unpack(data))
+return function (key, ...)
+  return redis.call('zadd', key, unpack(arg))
 end

@@ -1,3 +1,3 @@
-return function (key, data)
-  return redis.call('geoadd', key, unpack(data))
+return function (key, ...)
+  return redis.call('geoadd', key, unpack(arg))
 end

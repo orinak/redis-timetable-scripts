@@ -31,7 +31,7 @@ function Timetable:uid ()
 end
 
 function Timetable:index (time, route)
-  return zadd(self:keyfor 'timetable', { time, route.id })
+  return zadd(self:keyfor 'timetable', time, route.id)
 end
 
 function Timetable:add (time, argv)
