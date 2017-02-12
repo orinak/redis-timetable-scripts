@@ -91,9 +91,9 @@ test('add one', async t => {
     }
 
     redis
-        .zrange(key + ':timeline', 0, -1, 'withscores')
-        .then(timeline => t.deepEqual(
-            timeline, 
+        .zrange(key + ':duration', 0, -1, 'withscores')
+        .then(duration => t.deepEqual(
+            duration, 
             durations
                 .reduce(index_accum, [0, 0])
                 .map(String)

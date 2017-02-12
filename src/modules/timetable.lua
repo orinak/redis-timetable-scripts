@@ -1,3 +1,8 @@
+require '../utils/incr'
+require '../utils/zadd'
+require '../utils/geoadd'
+
+
 local Timetable = {}
 Timetable.__index = Timetable
 
@@ -25,51 +30,57 @@ end
 
 
 function Timetable.uid (self)
-    local luid_key = self.key .. ':luid'
-    local id = redis.call('incr', luid_key)
-    return tonumber(id);
+    return incr(self:xpath('luid'));
 end
 
-function Timetable.index (self, timestamp)
+
+function Timetable.add (self, time, data)
     local id = self:uid()
-    redis.call('zadd', self:xpath('timetable'), timestamp, id)
-    return id
-end
 
-function Timetable.add (self, timestamp, argv)
-    local id = self:index(timestamp)
-
-    local geoindex = {}
-    local timeline = {}
-    local distance = {}
-
-    local threshold = 0
-    local magnitude = 0
-
-    local step_id = 0
-
-    for i = 1, #argv, 4 do
-        if i > 1 then
-            threshold = threshold + argv[i-2]
-            magnitude = magnitude + argv[i-1]
-        end
-
-        table.insert(timeline, threshold)
-        table.insert(timeline, step_id)
-
-        table.insert(distance, magnitude)
-        table.insert(distance, step_id)
-
-        table.insert(geoindex, argv[i])
-        table.insert(geoindex, argv[i+1])
-        table.insert(geoindex, step_id)
-
-        step_id = step_id + 1
+    local function xpath (segment)
+        return self:xpath(id, segment)
     end
 
-    redis.call('zadd', self:xpath(id, 'timeline'), unpack(timeline))
-    redis.call('zadd', self:xpath(id, 'distance'), unpack(distance))
-    redis.call('geoadd', self:xpath(id, 'geoindex'), unpack(geoindex))
+    local function destruct (argv)
+        local geo = {}
+        local zt = {}
+        local zs = {}
+
+        local threshold = 0
+        local magnitude = 0
+
+        local id = 0
+
+        for i = 1, #argv, 4 do
+            table.insert(geo, argv[i])
+            table.insert(geo, argv[i+1])
+            table.insert(geo, id)
+
+            if i > 1 then
+                threshold = threshold + argv[i-2]
+                magnitude = magnitude + argv[i-1]
+            end
+
+            table.insert(zt, threshold)
+            table.insert(zt, id)
+
+            table.insert(zs, magnitude)
+            table.insert(zs, id)
+
+            id = id + 1
+        end
+
+        return geo, zt, zs
+    end
+
+    local geoindex, duration, distance = destruct(data);
+
+    geoadd(xpath('geoindex'), geoindex)
+
+    zadd(xpath('duration'), duration)
+    zadd(xpath('distance'), distance)
+
+    zadd(self:xpath('timetable'), { time, id })
 
     return id
 end
