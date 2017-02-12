@@ -14,7 +14,7 @@ function Timetable.init (key)
   return self
 end
 
-function Timetable:keyfor (self, ...)
+function Timetable:keyfor (...)
   local function join (arr)
     return table.concat(arr, ':')
   end
