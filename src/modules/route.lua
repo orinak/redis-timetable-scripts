@@ -88,26 +88,26 @@ function Route:locate (t)
     return nil
   end
 
-  local p_id, n_id, fraction = self:interval(t)
-
-  local function pos (...)
+  local function getpos (...)
     local key = self:keyfor('geoindex')
     return unpack(
       geopos(key, unpack(arg))
     )
   end
 
-  if not n_id then
-    return pos(p_id)
+  local id_prev, id_next, fraction = self:interval(t)
+
+  if not id_next then
+    return getpos(id_prev)
   end
 
-  local function destruct (lnglat)
+  local function destruct (pos)
     return unpack(
-      map(lnglat, math.rad)
+      map(pos, math.rad)
     )
   end
 
-  local p, n = pos(p_id, n_id);
+  local p, n = getpos(id_prev, id_next);
 
   local lng1, lat1 = destruct(p)
   local lng2, lat2 = destruct(n)

@@ -4,7 +4,7 @@ return function (key, score)
     'withscores',
     'limit', 0, 1
   }
-  -- return argv
-  local res = redis.call('zrevrangebyscore', key, unpack(argv))
-  return unpack(res)
+  return unpack(
+    redis.call('zrevrangebyscore', key, unpack(argv))
+  )
 end
