@@ -1,8 +1,8 @@
-local push = require '../utils/push'
+local Route = require 'route'
 
 local incr = require '../utils/incr'
 local zadd = require '../utils/zadd'
-local geoadd = require '../utils/geoadd'
+
 
 local Timetable = {}
 Timetable.__index = Timetable
@@ -25,56 +25,18 @@ function Timetable.keyfor (self, ...)
   return join(segments)
 end
 
-
 function Timetable:uid ()
   return incr(self:keyfor 'luid');
 end
 
+function Timetable:index (time, route)
+  return zadd(self:keyfor 'timetable', { time, route.id })
+end
 
-function Timetable:add (time, data)
-  local id = self:uid()
-
-  local function keyfor (segment)
-    return self:keyfor(id, segment)
-  end
-
-  local function destruct (argv)
-    local geo = {}
-    local zt = {}
-    local zs = {}
-
-    local threshold = 0
-    local magnitude = 0
-
-    local id = 0
-
-    for i = 1, #argv, 4 do
-      push(geo, argv[i], argv[i+1], id)
-
-      if i > 1 then
-        threshold = threshold + argv[i-2]
-        magnitude = magnitude + argv[i-1]
-      end
-
-      push(zt, threshold, id)
-      push(zs, magnitude, id)
-
-      id = id + 1
-    end
-
-    return geo, zt, zs
-  end
-
-  local geoindex, duration, distance = destruct(data);
-
-  geoadd(keyfor 'geoindex', geoindex)
-
-  zadd(keyfor 'duration', duration)
-  zadd(keyfor 'distance', distance)
-
-  zadd(self:keyfor('timetable'), { time, id })
-
-  return id
+function Timetable:add (time, argv)
+  local route = Route.create(self, time, argv)
+  self:index(time, route)
+  return route.id
 end
 
 return Timetable
