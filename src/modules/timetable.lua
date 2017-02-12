@@ -30,14 +30,18 @@ function Timetable:uid ()
   return incr(self:keyfor 'luid');
 end
 
-function Timetable:index (time, route)
-  return zadd(self:keyfor 'timetable', time, route.id)
+
+function Timetable:set (time, route)
+  local key = self:keyfor 'timetable'
+  local id = route and route.id
+                    or self:uid()
+  zadd(key, time, id)
+  return id
 end
 
 function Timetable:add (time, argv)
   local route = Route.create(self, time, argv)
-  self:index(time, route)
-  return route.id
+  return self:set(time, route)
 end
 
 function Timetable:locate (time)
