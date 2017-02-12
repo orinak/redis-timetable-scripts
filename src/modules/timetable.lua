@@ -2,7 +2,8 @@ local Route = require 'route'
 
 local incr = require '../utils/incr'
 local zadd = require '../utils/zadd'
-
+local zprev = require '../utils/zprev'
+local znext = require '../utils/znext'
 
 local Timetable = {}
 Timetable.__index = Timetable
@@ -37,6 +38,20 @@ function Timetable:add (time, argv)
   local route = Route.create(self, time, argv)
   self:index(time, route)
   return route.id
+end
+
+function Timetable:locate (time)
+  local key = self:keyfor 'timetable'
+
+  local route_id, route_time = zprev(key, time)
+
+  if not route_id then
+    return nil
+  end
+
+  local route = Route.init(self, route_id)
+
+  return route:locate(time - route_time)
 end
 
 return Timetable
