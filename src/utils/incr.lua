@@ -1,4 +1,3 @@
 local function incr (key, delta)
-    local x = redis.call('incr', key)
-    return tonumber(x)
+  return redis.call('incr', key) * 1
 end
