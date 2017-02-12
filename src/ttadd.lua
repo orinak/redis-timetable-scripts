@@ -1,4 +1,4 @@
-require "modules/timetable"
+local Timetable = require "modules/timetable"
 
 local timetable = Timetable.init(KEYS[1])
 

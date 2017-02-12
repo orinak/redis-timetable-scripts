@@ -1,6 +1,6 @@
-require 'foreach'
+local foreach = require 'foreach'
 
-local function push (arr, ...)
+return function (arr, ...)
   local function pushone (x)
     table.insert(arr, x)
   end

@@ -1,8 +1,8 @@
-require '../utils/push'
+local push = require '../utils/push'
 
-require '../utils/incr'
-require '../utils/zadd'
-require '../utils/geoadd'
+local incr = require '../utils/incr'
+local zadd = require '../utils/zadd'
+local geoadd = require '../utils/geoadd'
 
 local Timetable = {}
 Timetable.__index = Timetable
@@ -76,3 +76,5 @@ function Timetable:add (time, data)
 
   return id
 end
+
+return Timetable
