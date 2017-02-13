@@ -40,8 +40,8 @@ test.before(async t => {
         route.unshift(...step);
         if (i)
             route.unshift(
-                1,
-                durations.pop()
+                durations.pop(),
+                1
             );
         return route;
     };
@@ -92,7 +92,7 @@ test('get range', async t => {
     t.deepEqual(range, ['1', '2']);
 
     range = await redis.ttrange(key, 18, 30);
-    t.deepEqual(range, ['1', '2']);
+    t.deepEqual(range.map(Number), [1, 2]);
 
     range = await redis.ttrange(key, 12, 24);
     t.deepEqual(range, ['1']);

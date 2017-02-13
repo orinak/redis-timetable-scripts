@@ -7,8 +7,4 @@ local timetable = Timetable.init(KEYS[1])
 
 local location = timetable:locate(ARGV[1])
 
-if not location then
-  return nil
-end
-
-return map(location, format('%.8f'))
+return location and map(location, format('%.8f')) or nil

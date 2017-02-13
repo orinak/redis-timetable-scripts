@@ -72,12 +72,11 @@ end
 
 function Route:interval (t)
   local key = self:keyfor 'duration'
-  local p, tp = zprev(key, t)
-  local n, tn = znext(key, t)
 
-  if not n then
-    return p
-  end
+  local n, tn = znext(key, t)
+  if not n then return nil end
+
+  local p, tp = zprev(key, t)
 
   local fraction = (t - tp) / (tn - tp)
   return p, n, fraction
@@ -97,8 +96,8 @@ function Route:locate (t)
 
   local id_prev, id_next, fraction = self:interval(t)
 
-  if not id_next then
-    return getpos(id_prev)
+  if not id_prev then
+    return nil
   end
 
   local function destruct (pos)

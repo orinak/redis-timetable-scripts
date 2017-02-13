@@ -44,11 +44,51 @@ function Timetable:add (time, argv)
   return self:set(time, route)
 end
 
-function Timetable:range (min, max)
-  min = min or '-inf'
-  max = max and '('..max or '+inf'
+function Timetable:get (time)
   local key = self:keyfor 'timetable'
-  return zrangebyscore(key, min, max)
+  local id, start = zprev(key, time)
+
+  if not id then
+    return nil
+  end
+
+  local route = Route.init(self, id)
+  if route:locate(time-start) then
+    return id
+  end
+  return nil
+end
+
+function Timetable:range (min, max)
+  max = max and '('..max or '+inf'
+
+  local key = self:keyfor 'timetable'
+
+  local range = zrangebyscore(key, min, max)
+
+  local id, time = unpack(
+    redis.call('zrevrangebyscore', key, '('..min, 0, 'withscores')
+  )
+
+  if id then
+    -- if id - range[1] > 0 then
+    --   return range
+    -- end
+
+    local route = Route.init(self, id)
+    -- return route:interval(min-time)
+    if route:interval(min-time) then
+      table.insert(range, id, 1)
+    end
+  end
+  -- if not prev then
+  --   return range
+  -- end
+
+  -- if prev then
+  -- end
+
+  return range
 end
 
 function Timetable:locate (time)
