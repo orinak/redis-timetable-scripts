@@ -9,6 +9,7 @@ local geoadd = require '../utils/geoadd'
 local geopos = require '../utils/geopos'
 
 local haversine = require '../utils/haversine'
+local midpoint  = require '../utils/midpoint'
 
 local function destruct (argv)
   local geo = {}
@@ -99,33 +100,12 @@ function Route:locate (t)
   end
 
   local function destruct (pos)
-    return unpack(map(pos, math.rad))
+    return map(pos, math.rad)
   end
 
   local p, n = getpos(unpack(pn));
 
-  local lng1, lat1 = destruct(p)
-  local lng2, lat2 = destruct(n)
-
-  local d = haversine(lng1, lat1, lng2, lat2)
-
-  local A = math.sin(d * (1-fraction)) / math.sin(d)
-  local B = math.sin(d * fraction) / math.sin(d)
-
-  local x = A * math.cos(lat1) * math.cos(lng1)
-          + B * math.cos(lat2) * math.cos(lng2)
-  local y = A * math.cos(lat1) * math.sin(lng1)
-          + B * math.cos(lat2) * math.sin(lng2)
-  local z = A * math.sin(lat1)
-          + B * math.sin(lat2)
-
-  local mid_lat = math.atan(z, math.sqrt(x*x + y*y))
-  local mid_lng = math.atan(y, x)
-
-  local lat = math.deg(mid_lat)
-  local lng = math.deg(mid_lng)
-
-  return { lng, lat }
+  return midpoint(destruct(p), destruct(n), fraction)
 end
 
 
