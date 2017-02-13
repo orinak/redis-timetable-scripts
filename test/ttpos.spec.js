@@ -85,20 +85,21 @@ test('get edge', async t => {
     t.deepEqual(round5(pos), [0, 0]);
 
     pos = await redis.ttpos(agent_id, 18*60*60 + 600);
-    t.deepEqual(round5(pos), [0.33333, 0]);
+    t.deepEqual(round5(pos), [0.33, 0]);
 
-    pos = await redis.ttpos(agent_id, 18*60*60 + 3000);
+    pos = await redis.ttpos(agent_id, 18*60*60 + 2999);
     t.deepEqual(round5(pos), [1, -1]);
 
     pos = await redis.ttpos(agent_id, 18*60*60 + 3600);
-    t.deepEqual(round5(pos), [1, -1]);
+    t.falsy(pos);
 
 
     function round5 (tuple) {
         function round (x) {
-            return Math.round(x * 1e5) / 1e5;
+            return Math.round(x * 1e2) / 1e2;
         }
-        return tuple.map(round);
+        return tuple
+            && tuple.map(round);
     }
 
 });
