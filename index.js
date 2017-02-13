@@ -7,6 +7,11 @@ module.exports.ttadd = {
     numberOfKeys: 1
 };
 
+module.exports.ttrange = {
+    lua: load(dirname + 'ttrange'),
+    numberOfKeys: 1
+};
+
 module.exports.ttpos = {
     lua: load(dirname + 'ttpos'),
     numberOfKeys: 1

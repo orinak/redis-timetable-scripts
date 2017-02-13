@@ -72,22 +72,24 @@ end
 
 function Route:interval (t)
   local key = self:keyfor 'duration'
-  local p, tp = zprev(key, t)
-  local n, tn = znext(key, t)
 
-  if not n then
-    return p
-  end
-
-  local fraction = (t - tp) / (tn - tp)
-  return p, n, fraction
-end
-
-function Route:locate (t)
   if t < 0 then
     return nil
   end
 
+  local n, tn = znext(key, t)
+
+  if not n then
+    return nil
+  end
+
+  local p, tp = zprev(key, t)
+
+  local fraction = (t - tp) / (tn - tp)
+  return {p, n}, fraction
+end
+
+function Route:locate (t)
   local function getpos (...)
     local key = self:keyfor('geoindex')
     return unpack(
@@ -95,19 +97,17 @@ function Route:locate (t)
     )
   end
 
-  local id_prev, id_next, fraction = self:interval(t)
+  local pn, fraction = self:interval(t)
 
-  if not id_next then
-    return getpos(id_prev)
+  if not pn then
+    return nil
   end
 
   local function destruct (pos)
-    return unpack(
-      map(pos, math.rad)
-    )
+    return unpack(map(pos, math.rad))
   end
 
-  local p, n = getpos(id_prev, id_next);
+  local p, n = getpos(unpack(pn));
 
   local lng1, lat1 = destruct(p)
   local lng2, lat2 = destruct(n)
