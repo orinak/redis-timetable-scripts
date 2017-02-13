@@ -5,4 +5,4 @@ local Timetable = require 'modules/timetable'
 
 local timetable = Timetable.init(KEYS[1])
 
-return timetable:range(ARGV[1])
+return timetable:range(unpack(ARGV))

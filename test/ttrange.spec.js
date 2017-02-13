@@ -89,9 +89,14 @@ test('get range', async t => {
     let range;
 
     range = await redis.ttrange(key, 12, 36);
-    t.deepEqual(range, [1, 2]);
+    t.deepEqual(range, ['1', '2']);
 
-    range = await redis.ttpos(key, 21, 27);
-    t.deepEqual(range, [2]);
+    range = await redis.ttrange(key, 18, 30);
+    t.deepEqual(range, ['1', '2']);
 
+    range = await redis.ttrange(key, 12, 24);
+    t.deepEqual(range, ['1']);
+
+    range = await redis.ttrange(key, 21, 27);
+    t.deepEqual(range, ['2']);
 });

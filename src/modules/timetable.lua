@@ -3,6 +3,7 @@ local Route = require 'route'
 local incr = require '../utils/incr'
 local zadd = require '../utils/zadd'
 local zprev = require '../utils/zprev'
+local zrangebyscore = require '../utils/zrangebyscore'
 
 
 local Timetable = {}
@@ -30,7 +31,6 @@ function Timetable:uid ()
   return incr(self:keyfor 'luid');
 end
 
-
 function Timetable:set (time, route)
   local key = self:keyfor 'timetable'
   local id = route and route.id
@@ -42,6 +42,13 @@ end
 function Timetable:add (time, argv)
   local route = Route.create(self, time, argv)
   return self:set(time, route)
+end
+
+function Timetable:range (min, max)
+  min = min or '-inf'
+  max = max and '('..max or '+inf'
+  local key = self:keyfor 'timetable'
+  return zrangebyscore(key, min, max)
 end
 
 function Timetable:locate (time)
