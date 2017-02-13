@@ -62,15 +62,16 @@ function Timetable:get (time)
 end
 
 function Timetable:range (min, max)
+  min = min or '-inf'
+  max = max or '+inf'
+
   local initial, start = self:get(min)
   if initial then
     min = start
   end
 
-  max = max and '('..max or '+inf'
-
   local key = self:keyfor 'timetable'
-  return zrangebyscore(key, min, max)
+  return zrangebyscore(key, min, '('..max)
 end
 
 function Timetable:locate (time)

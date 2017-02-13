@@ -93,9 +93,16 @@ test('get range', async t => {
     }
 
     await redis
-        .ttrange(key, 12, 36)
+        .ttrange(key)
         .then(expect([1, 2]));
 
+    await redis
+        .ttrange(key, 24)
+        .then(expect([2]))
+
+    await redis
+        .ttrange(key, 12, 36)
+        .then(expect([1, 2]));
 
     await redis
         .ttrange(key, 18, 30)
