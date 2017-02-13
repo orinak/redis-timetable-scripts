@@ -19,13 +19,13 @@ test.after.always(async t => {
 
     return redis
         .keys('/test/*')
-        .then(cleanup);    
+        .then(cleanup);
 });
 
 
 const agent_id = '/test/A';
 
-const routes = [{ 
+const routes = [{
     time: String(18*60*60),
     data: {
         steps: [[0, 0], [1, 0], [1, -1]],
@@ -51,14 +51,12 @@ test('add one', async t => {
     const {
         time: timestamp,
         data: {
-            steps, 
-            durations, 
-            distances
+            steps,
+            durations
         }
     } = routes[0];
 
     const [t1, t2] = durations;
-    const [s1, s2] = distances;
     const [
         [lng1, lat1],
         [lng2, lat2],
@@ -72,16 +70,16 @@ test('add one', async t => {
             agent_id,   // key
             timestamp,  // start
             lng1, lat1, // initial
-            t1, s1,     // interval, distance
+            t1,         // interval
             lng2, lat2, // ...
-            t2, s2,     //
+            t2,         //
             lng3,lat3   // final
         );
 
     t.is(id, 1, 'first');
 
     // check redis
-    
+
     const key = agent_id + ':' + id;
 
     const index_accum = (arr, delta, i) => {
@@ -93,21 +91,12 @@ test('add one', async t => {
     redis
         .zrange(key + ':duration', 0, -1, 'withscores')
         .then(duration => t.deepEqual(
-            duration, 
+            duration,
             durations
                 .reduce(index_accum, [0, 0])
                 .map(String)
         ));
 
-
-    redis
-        .zrange(key + ':distance', 0, -1, 'withscores')
-        .then(distance => t.deepEqual(
-            distance, 
-            distances
-                .reduce(index_accum, [0, 0])
-                .map(String)
-        ));
 
     const round = tuple => tuple.map(x => {
         const k = Math.pow(10, 5);
@@ -117,10 +106,10 @@ test('add one', async t => {
     redis
         .geopos(key + ':geoindex', 0, 1, 2)
         .then(locations => t.deepEqual(
-            locations.map(round5), 
+            locations.map(round5),
             steps
         ));
-    
+
 
     function round5 (tuple) {
         function round (x) {
@@ -137,8 +126,8 @@ test('add next', async t => {
     const {
         time: timestamp,
         data: {
-            steps, 
-            durations, 
+            steps,
+            durations,
             distances
         }
     } = routes[1];
@@ -154,10 +143,10 @@ test('add next', async t => {
     // exec
     const id = await redis
         .ttadd(
-            agent_id,  
-            timestamp, 
+            agent_id,
+            timestamp,
             lng1, lat1,
-            t1, s1,    
+            t1,
             lng2, lat2,
         );
 

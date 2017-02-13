@@ -13,28 +13,24 @@ local haversine = require '../utils/haversine'
 local function destruct (argv)
   local geo = {}
   local zt  = {}
-  local zs  = {}
 
   local threshold = 0
-  local magnitude = 0
 
   local id = 0
 
-  for i = 1, #argv, 4 do
+  for i = 1, #argv, 3 do
     push(geo, argv[i], argv[i+1], id)
 
     if i > 1 then
-      threshold = threshold + argv[i-2]
-      magnitude = magnitude + argv[i-1]
+      threshold = threshold + argv[i-1]
     end
 
     push(zt, threshold, id)
-    push(zs, magnitude, id)
 
     id = id + 1
   end
 
-  return geo, zt, zs
+  return geo, zt
 end
 
 
@@ -55,13 +51,11 @@ function Route.create (timetable, time, data)
 
   local self = Route.init(timetable, id)
 
-  local geoindex, duration, distance = destruct(data);
+  local geoindex, duration = destruct(data);
 
   geoadd(self:keyfor 'geoindex', unpack(geoindex))
 
   zadd(self:keyfor 'duration', unpack(duration))
-  zadd(self:keyfor 'distance', unpack(distance))
-
   return self
 end
 
@@ -69,6 +63,7 @@ end
 function Route:keyfor (segment)
   return self.timetable:keyfor(self.id, segment)
 end
+
 
 function Route:interval (t)
   local key = self:keyfor 'duration'

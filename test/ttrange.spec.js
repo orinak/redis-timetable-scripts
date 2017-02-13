@@ -40,8 +40,7 @@ test.before(async t => {
         route.unshift(...step);
         if (i)
             route.unshift(
-                durations.pop(),
-                1
+                durations.pop()
             );
         return route;
     };

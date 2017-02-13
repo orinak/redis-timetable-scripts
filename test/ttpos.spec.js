@@ -49,9 +49,9 @@ test.before(async t => {
         agent_id,
         timestamp,
         lng1, lat1,
-        t1, s1,
+        t1,
         lng2, lat2,
-        t2, s2,
+        t2,
         lng3,lat3
     );
 });
