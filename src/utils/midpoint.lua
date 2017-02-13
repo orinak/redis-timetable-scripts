@@ -1,8 +1,12 @@
 return function (point_a, point_b, fraction)
   fraction = fraction or 1/2
 
-  local lng_a, lat_a = unpack(point_a)
-  local lng_b, lat_b = unpack(point_b)
+  local function destruct (pos)
+    return unpack(map(pos, math.rad))
+  end
+
+  local lng_a, lat_a = destruct(point_a)
+  local lng_b, lat_b = destruct(point_b)
 
   local d = haversine(lng_a, lat_a, lng_b, lat_b)
 

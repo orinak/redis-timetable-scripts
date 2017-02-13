@@ -66,46 +66,39 @@ function Route:keyfor (segment)
 end
 
 
-function Route:interval (t)
+function Route:get (t)
   local key = self:keyfor 'duration'
 
-  if t < 0 then
+  local id_p, t_p = zprev(key, t)
+  local id_n, t_n = znext(key, t)
+
+  if not id_p or not id_n then
     return nil
   end
 
-  local n, tn = znext(key, t)
+  local fraction = (t - t_p) / (t_n - t_p)
 
-  if not n then
-    return nil
-  end
-
-  local p, tp = zprev(key, t)
-
-  local fraction = (t - tp) / (tn - tp)
-  return {p, n}, fraction
+  return id_p, id_n, fraction
 end
 
+
 function Route:locate (t)
-  local function getpos (...)
+  local function locate (...)
     local key = self:keyfor('geoindex')
     return unpack(
       geopos(key, unpack(arg))
     )
   end
 
-  local pn, fraction = self:interval(t)
+  local id_p, id_n, fraction = self:get(t)
 
-  if not pn then
+  if not id_p or not id_n then
     return nil
   end
 
-  local function destruct (pos)
-    return map(pos, math.rad)
-  end
+  local p, n = locate(id_p, id_n);
 
-  local p, n = getpos(unpack(pn));
-
-  return midpoint(destruct(p), destruct(n), fraction)
+  return midpoint(p, n, fraction)
 end
 
 
