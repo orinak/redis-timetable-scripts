@@ -66,12 +66,17 @@ function Timetable:range (min, max)
 
   local key = self:keyfor 'timetable'
 
-  local range = zrangebyscore(key, '('..min, max)
-
   local initial, start = self:get(min)
   if initial then
-    table.insert(range, initial.id, 1)
+    min = start
   end
+
+  local range = zrangebyscore(key, min, max)
+
+  -- local initial, start = self:get(min)
+  -- if initial then
+  --   table.insert(range, initial.id, 1)
+  -- end
 
   return range
 end
