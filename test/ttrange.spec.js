@@ -88,15 +88,27 @@ test('get range', async t => {
 
     let range;
 
-    range = await redis.ttrange(key, 12, 36);
-    t.deepEqual(range, ['1', '2']);
+    const expect = data => res => {
+        t.deepEqual(res.map(Number), data)
+        return Promise.resolve();
+    }
 
-    range = await redis.ttrange(key, 18, 30);
-    t.deepEqual(range.map(Number), [1, 2]);
+    await redis
+        .ttrange(key, 12, 36)
+        .then(expect([1, 2]));
 
-    range = await redis.ttrange(key, 12, 24);
-    t.deepEqual(range, ['1']);
 
-    range = await redis.ttrange(key, 21, 27);
-    t.deepEqual(range, ['2']);
+    await redis
+        .ttrange(key, 18, 30)
+        .then(expect([1, 2]));
+
+    await redis
+        .ttrange(key, 12, 24)
+        .then(expect([1]));
+
+    await redis
+        .ttrange(key, 21, 27)
+        .then(expect([2]))
+
+
 });

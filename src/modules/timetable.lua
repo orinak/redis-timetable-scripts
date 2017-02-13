@@ -44,26 +44,7 @@ function Timetable:add (time, argv)
   return self:set(time, route)
 end
 
-function Timetable:range (min, max)
-  max = max and '('..max or '+inf'
-
-  local key = self:keyfor 'timetable'
-
-  local range = zrangebyscore(key, min, max)
-
-  local id, time = zprev(key, '('..min)
-
-  if id then
-    local route = Route.init(self, id)
-    if route:interval(min-time) then
-      table.insert(range, id, 1)
-    end
-  end
-
-  return range
-end
-
-function Timetable:locate (time)
+function Timetable:get (time, inclusive)
   local key = self:keyfor 'timetable'
   local id, start = zprev(key, time)
 
@@ -72,7 +53,33 @@ function Timetable:locate (time)
   end
 
   local route = Route.init(self, id)
-  return route:locate(time - start)
+
+  if not route:interval(time-start) then
+    return nil
+  end
+
+  return route, start
+end
+
+function Timetable:range (min, max)
+  max = max and '('..max or '+inf'
+
+  local key = self:keyfor 'timetable'
+
+  local range = zrangebyscore(key, '('..min, max)
+
+  local initial, start = self:get(min)
+  if initial then
+    table.insert(range, initial.id, 1)
+  end
+
+  return range
+end
+
+function Timetable:locate (time)
+  local route, start = self:get(time)
+
+  return route and route:locate(time-start)
 end
 
 return Timetable
