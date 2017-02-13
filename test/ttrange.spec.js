@@ -13,25 +13,18 @@ redis.defineCommand('ttrange', ttrange);
 const agent_id = '/test/A';
 
 const routes = [{
-    time: String(18*60*60),
+    time: 12,
     data: {
-        steps: [[0, 0], [1, 0], [1, -1]],
-        durations: [1800, 1200],
-        distances: [6e3, 6e3]
+        steps: [[0, -1], [-1, 0], [0, 1]],
+        durations: [3, 6],
+        distances: [6, 6]
     }
 }, {
-    time: String(19*60*60),
+    time: 24,
     data: {
-        steps: [[1, -1], [0, 0]],
-        durations: [900],
-        distances: [9e3]
-    }
-}, {
-    time: String(20*60*60),
-    data: {
-        steps: [[0, 0], [-1, 0], [0, 1]],
-        durations: [600, 1800],
-        distances: [6e3, 9e3]
+        steps: [[0, 1], [1, 1], [1, 0], [0, 0]],
+        durations: [6, 4, 2],
+        distances: [4, 4, 4]
     }
 }];
 
@@ -39,32 +32,32 @@ const routes = [{
 test.before(async t => {
     redis.defineCommand('ttadd', ttadd);
 
+    const key = agent_id;
+
     const pipeline = redis.pipeline();
+
+    const transform = durations => (route, step, i) => {
+        route.unshift(...step);
+        if (i)
+            route.unshift(
+                1,
+                durations.pop()
+            );
+        return route;
+    };
 
     routes.forEach(route => {
         const {
             time,
             data: {
                 steps,
-                durations,
-                distances
+                durations
             }
         } = route;
 
-        const track = [];
+        const argv = steps.reduceRight(transform(durations), []);
 
-        steps.reduceRight((v, step, i) => {
-            v.unshift(...step);
-            if (i)
-                v.unshift(
-                    durations.pop(),
-                    distances.pop()
-                )
-            return v
-        }, track)
-
-        pipeline.ttadd(agent_id, time, ...track);
-
+        pipeline.ttadd(key, time, ...argv);
     });
 
     // exec
@@ -91,36 +84,14 @@ test('init', t => {
 
 
 test('get range', async t => {
+    const key = agent_id;
+
     let range;
 
-    const t1800 = 18*60*60
-    const t1830 = 18*60*60 + 30*60
-    const t1900 = 19*60*60
-    const t1930 = 19*60*60 + 30*60
-    const t2000 = 12*60*60
+    range = await redis.ttrange(key, 12, 36);
+    t.deepEqual(range, [1, 2]);
 
-
-    range = await redis.ttrange(agent_id, t1800);
-    t.falsy(pos);
-
-    pos = await redis.ttpos(agent_id, 18*60*60);
-    t.deepEqual(round5(pos), [0, 0]);
-
-    pos = await redis.ttpos(agent_id, 18*60*60 + 600);
-    t.deepEqual(round5(pos), [0.33333, 0]);
-
-    pos = await redis.ttpos(agent_id, 18*60*60 + 3000);
-    t.deepEqual(round5(pos), [1, -1]);
-
-    pos = await redis.ttpos(agent_id, 18*60*60 + 3600);
-    t.deepEqual(round5(pos), [1, -1]);
-
-
-    function round5 (tuple) {
-        function round (x) {
-            return Math.round(x * 1e5) / 1e5;
-        }
-        return tuple.map(round);
-    }
+    range = await redis.ttpos(key, 21, 27);
+    t.deepEqual(range, [2]);
 
 });
