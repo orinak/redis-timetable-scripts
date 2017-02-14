@@ -38,33 +38,30 @@ end
 local Route = {}
 Route.__index = Route
 
-function Route.init (timetable, id)
+function Route.init (key, argv)
   local self = setmetatable({}, Route)
 
-  self.id = id
-  self.timetable = timetable
+  self.key = key
+
+  if argv then
+    self:set(argv)
+  end
 
   return self
 end
-
-function Route.create (timetable, time, data)
-  local id = timetable:uid()
-
-  local self = Route.init(timetable, id)
-
-  local geoindex, duration = destruct(data);
-
-  geoadd(self:keyfor 'geoindex', unpack(geoindex))
-
-  zadd(self:keyfor 'duration', unpack(duration))
-  return self
-end
-
 
 function Route:keyfor (segment)
-  return self.timetable:keyfor(self.id, segment)
+  segment = segment and ':'..segment or ''
+  return self.key .. segment
 end
 
+function Route:set (argv)
+  local geoindex, duration = destruct(argv);
+  geoadd(self:keyfor 'geoindex', unpack(geoindex))
+  zadd(self:keyfor 'duration', unpack(duration))
+
+  return self
+end
 
 function Route:get (t)
   local key = self:keyfor 'duration'
@@ -96,7 +93,7 @@ function Route:locate (t)
     return nil
   end
 
-  local p, n = locate(id_p, id_n);
+  local p, n = locate(id_p, id_n)
 
   return midpoint(p, n, fraction)
 end

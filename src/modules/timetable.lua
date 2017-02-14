@@ -27,32 +27,31 @@ function Timetable:keyfor (...)
   return join(segments)
 end
 
-function Timetable:uid ()
-  return incr(self:keyfor 'luid');
-end
-
-function Timetable:set (time, route)
-  local key = self:keyfor 'timetable'
-  local id = route and route.id
-                    or self:uid()
-  zadd(key, time, id)
+function Timetable:uid (time)
+  -- produce unique id
+  local id = incr(self:keyfor 'luid')
+  -- index by time
+  zadd(self:keyfor 'timetable', time, id)
+  -- expose
   return id
 end
 
 function Timetable:add (time, argv)
-  local route = Route.create(self, time, argv)
-  return self:set(time, route)
+  local id = self:uid(time)
+  local key = self:keyfor(id)
+  Route.init(key, argv)
+  return id
 end
 
 function Timetable:get (time)
-  local key = self:keyfor 'timetable'
-  local id, start = zprev(key, time)
+  local id, start = zprev(self:keyfor 'timetable', time)
 
   if not id then
     return nil
   end
 
-  local route = Route.init(self, id)
+  local key = self:keyfor(id)
+  local route = Route.init(key)
   if not route:get(time-start) then
     return nil
   end
@@ -86,7 +85,8 @@ function Timetable:locate (time)
     return nil
   end
 
-  local route = Route.init(self, id)
+  local key = self:keyfor(id)
+  local route = Route.init(key)
   return route:locate(time-start)
 end
 
