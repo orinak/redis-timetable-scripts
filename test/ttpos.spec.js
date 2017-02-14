@@ -9,51 +9,51 @@ const redis = new Redis();
 
 redis.defineCommand('ttpos', ttpos);
 
-const agent_id = '/test/A';
+
+const KEY = '/test/A';
+
+const routes = [{
+    time: 12,
+    data: {
+        steps: [[0, -1], [-1, 0], [0, 1]],
+        durations: [3, 6]
+    }
+}, {
+    time: 24,
+    data: {
+        steps: [[0, 1], [1, 1], [1, 0], [0, 0]],
+        durations: [6, 4, 2]
+    }
+}];
+
 
 test.before(async t => {
     redis.defineCommand('ttadd', ttadd);
 
-    const routes = [{
-        time: String(18*60*60),
-        data: {
-            steps: [[0, 0], [1, 0], [1, -1]],
-            durations: [1800, 1200],
-            distances: [6e3, 6e3]
-        }
-    }, {
-        time: String(19*60*60),
-        data: {
-            steps: [[1, -1], [0, 0]],
-            durations: [900],
-            distances: [9e3]
-        }
-    }];
+    const pipeline = redis.pipeline();
 
-    // destruct
-    const {
-        time: timestamp,
-        data: {
-            steps: [
-                [lng1, lat1],
-                [lng2, lat2],
-                [lng3, lat3]
-            ],
-            durations: [t1, t2],
-            distances: [s1, s2]
-        }
-    } = routes[0];
+    const transform = durations => (route, step, i) => {
+        route.unshift(...step);
+        if (i)
+            route.unshift(
+                durations.pop()
+            );
+        return route;
+    };
+
+    routes.forEach(route => {
+        const {
+            time,
+            data: { steps, durations }
+        } = route;
+
+        const argv = steps.reduceRight(transform(durations), []);
+
+        pipeline.ttadd(KEY, time, ...argv);
+    });
 
     // exec
-    return await redis.ttadd(
-        agent_id,
-        timestamp,
-        lng1, lat1,
-        t1,
-        lng2, lat2,
-        t2,
-        lng3,lat3
-    );
+    return pipeline.exec();
 });
 
 test.after.always(async t => {
@@ -75,31 +75,37 @@ test('init', t => {
 });
 
 
-test('get edge', async t => {
-    let pos;
+test('get range', async t => {
+    const decimal = x => Math.round(x * 1e2) / 1e2;
 
-    pos = await redis.ttpos(agent_id, 18*60*60 - 600);
-    t.falsy(pos);
+    const expect = input => res => {
+        if (res)
+            t.deepEqual(res.map(decimal), input)
+        else
+            t.falsy(input);
+        return Promise.resolve();
+    };
 
-    pos = await redis.ttpos(agent_id, 18*60*60);
-    t.deepEqual(round5(pos), [0, 0]);
-
-    pos = await redis.ttpos(agent_id, 18*60*60 + 600);
-    t.deepEqual(round5(pos), [0.33, 0]);
-
-    pos = await redis.ttpos(agent_id, 18*60*60 + 2999);
-    t.deepEqual(round5(pos), [1, -1]);
-
-    pos = await redis.ttpos(agent_id, 18*60*60 + 3600);
-    t.falsy(pos);
+    const run = (input, output) => redis
+        .ttpos(KEY, input)
+        .then(expect(output));
 
 
-    function round5 (tuple) {
-        function round (x) {
-            return Math.round(x * 1e2) / 1e2;
-        }
-        return tuple
-            && tuple.map(round);
-    }
+    await Promise.all([
+        run(0, null),
+        run(11.999, null),
 
+        run(12, [0, -1]),
+        run(15, [-1, 0]),
+        run(18, [-.5, .5]),
+        run(20.999, [0, 1]),
+        run(21, null),
+
+        run(24, [0, 1]),
+        run(28, [0.67, 1]),
+        run(30, [1, 1]),
+        run(34, [1, 0]),
+        run(35.999, [0, 0]),
+        run(36, null),
+    ]);
 });
