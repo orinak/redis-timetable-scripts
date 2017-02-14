@@ -53,31 +53,41 @@ function Timetable:get (time)
   end
 
   local route = Route.init(self, id)
-
   if not route:get(time-start) then
     return nil
   end
 
-  return route, start
+  return id, start
 end
 
 function Timetable:range (min, max)
+  local key = self:keyfor 'timetable'
+
   min = min or '-inf'
   max = max or '+inf'
 
   local initial, start = self:get(min)
+
+  if min == max then
+    return initial and { initial } or nil
+  end
+
   if initial then
     min = start
   end
 
-  local key = self:keyfor 'timetable'
   return zrangebyscore(key, min, '('..max)
 end
 
 function Timetable:locate (time)
-  local route, start = self:get(time)
+  local id, start = self:get(time)
 
-  return route and route:locate(time-start)
+  if not id then
+    return nil
+  end
+
+  local route = Route.init(self, id)
+  return route:locate(time-start)
 end
 
 return Timetable

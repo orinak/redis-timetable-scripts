@@ -10,29 +10,25 @@ const redis = new Redis();
 redis.defineCommand('ttrange', ttrange);
 
 
-const agent_id = '/test/A';
+const KEY = '/test/A';
 
 const routes = [{
     time: 12,
     data: {
         steps: [[0, -1], [-1, 0], [0, 1]],
-        durations: [3, 6],
-        distances: [6, 6]
+        durations: [3, 6]
     }
 }, {
     time: 24,
     data: {
         steps: [[0, 1], [1, 1], [1, 0], [0, 0]],
-        durations: [6, 4, 2],
-        distances: [4, 4, 4]
+        durations: [6, 4, 2]
     }
 }];
 
 
 test.before(async t => {
     redis.defineCommand('ttadd', ttadd);
-
-    const key = agent_id;
 
     const pipeline = redis.pipeline();
 
@@ -48,15 +44,12 @@ test.before(async t => {
     routes.forEach(route => {
         const {
             time,
-            data: {
-                steps,
-                durations
-            }
+            data: { steps, durations }
         } = route;
 
         const argv = steps.reduceRight(transform(durations), []);
 
-        pipeline.ttadd(key, time, ...argv);
+        pipeline.ttadd(KEY, time, ...argv);
     });
 
     // exec
@@ -83,38 +76,31 @@ test('init', t => {
 
 
 test('get range', async t => {
-    const key = agent_id;
-
-    let range;
-
     const expect = data => res => {
         t.deepEqual(res.map(Number), data)
         return Promise.resolve();
-    }
+    };
 
-    await redis
-        .ttrange(key)
-        .then(expect([1, 2]));
+    const run = (input, output) => redis
+        .ttrange(KEY, ...input)
+        .then(expect(output));
 
-    await redis
-        .ttrange(key, 24)
-        .then(expect([2]))
+    await Promise.all([
+        run([],       [1, 2]),
+        run([12],     [1, 2]),
+        run([24],     [   2]),
+        run([36],     [    ]),
 
-    await redis
-        .ttrange(key, 12, 36)
-        .then(expect([1, 2]));
+        run([12, 36], [1, 2]),
+        run([18, 30], [1, 2]),
+        run([21, 27], [   2]),
 
-    await redis
-        .ttrange(key, 18, 30)
-        .then(expect([1, 2]));
+        run([21, 24], [    ]),
 
-    await redis
-        .ttrange(key, 12, 24)
-        .then(expect([1]));
-
-    await redis
-        .ttrange(key, 21, 27)
-        .then(expect([2]))
-
-
+        run([20, 20], [1   ]),
+        run([21, 21], [    ]),
+        run([22, 22], [    ]),
+        run([23, 23], [    ]),
+        run([24, 24], [   2])
+    ]);
 });
