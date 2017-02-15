@@ -1,8 +1,8 @@
 {
-  "name": "agent-routing-timetable",
+  "name": "redis-timetable-scripts",
   "private": true,
-  "version": "0.0.0",
-  "description": "redis backed route model",
+  "version": "0.0.1",
+  "description": "Redis backed route model",
   "main": "index.js",
   "directories": {
     "test": "test"
