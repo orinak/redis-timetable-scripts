@@ -89,9 +89,9 @@ test('add one', async t => {
     }
 
     redis
-        .zrange(key + ':duration', 0, -1, 'withscores')
-        .then(duration => t.deepEqual(
-            duration,
+        .zrange(key + ':timeline', 0, -1, 'withscores')
+        .then(timeline => t.deepEqual(
+            timeline,
             durations
                 .reduce(index_accum, [0, 0])
                 .map(String)
@@ -105,8 +105,8 @@ test('add one', async t => {
 
     redis
         .geopos(key + ':geoindex', 0, 1, 2)
-        .then(locations => t.deepEqual(
-            locations.map(round5),
+        .then(geoindex => t.deepEqual(
+            geoindex.map(round5),
             steps
         ));
 
@@ -154,7 +154,7 @@ test('add next', async t => {
 
     // check indexing
 
-    const routes_key = agent_id + ':timetable'
+    const routes_key = agent_id + ':timeline'
 
     redis
         .zrange(routes_key, 0, -1, 'withscores')

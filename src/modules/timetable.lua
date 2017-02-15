@@ -6,6 +6,10 @@ local zprev = require '../utils/zprev'
 local zrangebyscore = require '../utils/zrangebyscore'
 
 
+local LUID = 'luid'
+local TIMELINE = 'timeline'
+
+
 local Timetable = {}
 Timetable.__index = Timetable
 
@@ -29,9 +33,9 @@ end
 
 function Timetable:uid (time)
   -- produce unique id
-  local id = incr(self:keyfor 'luid')
+  local id = incr(self:keyfor(LUID))
   -- index by time
-  zadd(self:keyfor 'timetable', time, id)
+  zadd(self:keyfor(TIMELINE), time, id)
   -- expose
   return id
 end
@@ -44,7 +48,7 @@ function Timetable:add (time, argv)
 end
 
 function Timetable:get (time)
-  local id, start = zprev(self:keyfor 'timetable', time)
+  local id, start = zprev(self:keyfor(TIMELINE), time)
 
   if not id then
     return nil
@@ -60,7 +64,7 @@ function Timetable:get (time)
 end
 
 function Timetable:range (min, max)
-  local key = self:keyfor 'timetable'
+  local key = self:keyfor(TIMELINE)
 
   min = min or '-inf'
   max = max or '+inf'

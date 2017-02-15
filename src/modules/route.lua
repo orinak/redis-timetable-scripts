@@ -11,27 +11,33 @@ local geopos = require '../utils/geopos'
 local haversine = require '../utils/haversine'
 local midpoint  = require '../utils/midpoint'
 
+
+local TIMELINE = 'timeline'
+local GEOINDEX = 'geoindex'
+
+
 local function destruct (argv)
-  local geo = {}
-  local zt  = {}
+  local geoindex = {}
+  local timeline  = {}
 
   local threshold = 0
 
   local id = 0
 
   for i = 1, #argv, 3 do
-    push(geo, argv[i], argv[i+1], id)
+    push(geoindex, argv[i], argv[i+1], id)
 
+    -- skip first step, starts at 0 moment
     if i > 1 then
       threshold = threshold + argv[i-1]
     end
 
-    push(zt, threshold, id)
+    push(timeline, threshold, id)
 
     id = id + 1
   end
 
-  return geo, zt
+  return timeline, geoindex
 end
 
 
@@ -56,15 +62,14 @@ function Route:keyfor (segment)
 end
 
 function Route:set (argv)
-  local geoindex, duration = destruct(argv);
-  geoadd(self:keyfor 'geoindex', unpack(geoindex))
-  zadd(self:keyfor 'duration', unpack(duration))
-
+  local timeline, geoindex = destruct(argv);
+  zadd(self:keyfor(TIMELINE), unpack(timeline))
+  geoadd(self:keyfor(GEOINDEX), unpack(geoindex))
   return self
 end
 
 function Route:get (t)
-  local key = self:keyfor 'duration'
+  local key = self:keyfor(TIMELINE)
 
   local id_p, t_p = zprev(key, t)
   local id_n, t_n = znext(key, t)
@@ -81,7 +86,7 @@ end
 
 function Route:locate (t)
   local function locate (...)
-    local key = self:keyfor('geoindex')
+    local key = self:keyfor(GEOINDEX)
     return unpack(
       geopos(key, unpack(arg))
     )
