@@ -10,6 +10,24 @@ const redis = new Redis();
 redis.defineCommand('ttadd', ttadd);
 
 
+const KEY = '/test/A';
+
+const routes = [{
+    time: 12,
+    data: {
+        steps: [[0, -1], [-1, 0], [0, 1]],
+        durations: [3, 6]
+    }
+}, {
+    time: 24,
+    data: {
+        steps: [[0, 1], [1, 1], [1, 0], [0, 0]],
+        durations: [6, 4, 2]
+    }
+}];
+
+
+
 test.after.always(async t => {
     function cleanup (keys) {
         const pipeline = redis.pipeline();
@@ -23,64 +41,39 @@ test.after.always(async t => {
 });
 
 
-const agent_id = '/test/A';
-
-const routes = [{
-    time: String(18*60*60),
-    data: {
-        steps: [[0, 0], [1, 0], [1, -1]],
-        durations: [1800, 1200],
-        distances: [6e3, 6e3]
-    }
-}, {
-    time: String(19*60*60),
-    data: {
-        steps: [[1, -1], [0, 0]],
-        durations: [900],
-        distances: [9e3]
-    }
-}];
-
-
-test('init', t => {
-    t.is(typeof redis.ttadd, 'function');
-});
-
 test('add one', async t => {
     // destruct
     const {
-        time: timestamp,
+        time,
         data: {
             steps,
             durations
         }
     } = routes[0];
 
-    const [t1, t2] = durations;
+    const [t12, t23] = durations;
     const [
         [lng1, lat1],
         [lng2, lat2],
         [lng3, lat3]
     ] = steps;
 
-
     // exec
     const id = await redis
         .ttadd(
-            agent_id,   // key
-            timestamp,  // start
+            KEY,        // key
+            time,       // start
             lng1, lat1, // initial
-            t1,         // interval
+            t12,        // interval
             lng2, lat2, // ...
-            t2,         //
+            t23,        //
             lng3,lat3   // final
         );
 
     t.is(id, 1, 'first');
 
     // check redis
-
-    const key = agent_id + ':' + id;
+    const key = KEY + ':' + id;
 
     const index_accum = (arr, delta, i) => {
         const last = arr[arr.length-1];
@@ -124,16 +117,14 @@ test('add one', async t => {
 test('add next', async t => {
     // destruct
     const {
-        time: timestamp,
+        time,
         data: {
             steps,
-            durations,
-            distances
+            durations
         }
     } = routes[1];
 
-    const [t1] = durations;
-    const [s1] = distances;
+    const [t12] = durations;
     const [
         [lng1, lat1],
         [lng2, lat2]
@@ -143,10 +134,10 @@ test('add next', async t => {
     // exec
     const id = await redis
         .ttadd(
-            agent_id,
-            timestamp,
+            KEY,
+            time,
             lng1, lat1,
-            t1,
+            t12,
             lng2, lat2,
         );
 
@@ -154,10 +145,8 @@ test('add next', async t => {
 
     // check indexing
 
-    const routes_key = agent_id + ':timeline'
-
     redis
-        .zrange(routes_key, 0, -1, 'withscores')
+        .zrange(KEY + ':timeline', 0, -1, 'withscores')
         .then(list => t.deepEqual(
             list,
             routes
